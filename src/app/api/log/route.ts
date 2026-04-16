@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { getLogByDate, addLogEntry, deleteLogEntry, findFoodById } from "@/db/store";
 import type { LogEntryWithFood } from "@/lib/types";
