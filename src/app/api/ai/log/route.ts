@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const savedFood = addCustomFood({
+    const savedFood = await addCustomFood({
       name: String(food.name),
       calories: Number(food.calories) || 0,
       protein: Number(food.protein) || 0,
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       servingSize: String(food.servingSize ?? "1 serving"),
     });
 
-    const entry = addLogEntry(savedFood.id, servings, date, meal);
+    const entry = await addLogEntry(savedFood.id, servings, date, meal);
     return NextResponse.json({ ...entry, food: savedFood });
   } catch (error) {
     console.error("AI log error:", error);
