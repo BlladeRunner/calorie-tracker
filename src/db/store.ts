@@ -10,13 +10,15 @@ export interface LogEntry {
   createdAt: string;
 }
 
-const db = createClient({
-  url: process.env.TURSO_DATABASE_URL!,
-  authToken: process.env.TURSO_AUTH_TOKEN!,
-});
+function getDB() {
+  return createClient({
+    url: process.env.TURSO_DATABASE_URL!,
+    authToken: process.env.TURSO_AUTH_TOKEN!,
+  });
+}
 
-// Auto-create tables on first use
 async function initDB() {
+  const db = getDB();
   await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS log_entries (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,13 +38,11 @@ async function initDB() {
       servingSize TEXT NOT NULL
     );
   `);
+  return db;
 }
 
-// Call once at module load
-const ready = initDB();
-
 export async function getLogByDate(date: string): Promise<LogEntry[]> {
-  await ready;
+  const db = await initDB();
   const result = await db.execute({
     sql: "SELECT * FROM log_entries WHERE loggedAt = ?",
     args: [date],
@@ -63,7 +63,7 @@ export async function addLogEntry(
   date: string,
   meal: string = "snack"
 ): Promise<LogEntry> {
-  await ready;
+  const db = await initDB();
   const createdAt = new Date().toISOString();
   const result = await db.execute({
     sql: "INSERT INTO log_entries (foodId, servings, meal, loggedAt, createdAt) VALUES (?, ?, ?, ?, ?)",
@@ -80,7 +80,7 @@ export async function addLogEntry(
 }
 
 export async function deleteLogEntry(id: number): Promise<boolean> {
-  await ready;
+  const db = await initDB();
   const result = await db.execute({
     sql: "DELETE FROM log_entries WHERE id = ?",
     args: [id],
@@ -89,7 +89,7 @@ export async function deleteLogEntry(id: number): Promise<boolean> {
 }
 
 export async function addCustomFood(food: Omit<Food, "id">): Promise<Food> {
-  await ready;
+  const db = await initDB();
   const result = await db.execute({
     sql: "INSERT INTO custom_foods (name, calories, protein, carbs, fat, servingSize) VALUES (?, ?, ?, ?, ?, ?)",
     args: [food.name, food.calories, food.protein, food.carbs, food.fat, food.servingSize],
@@ -100,7 +100,7 @@ export async function addCustomFood(food: Omit<Food, "id">): Promise<Food> {
 export async function findFoodById(id: number): Promise<Food | undefined> {
   const hardcoded = FOODS.find((f) => f.id === id);
   if (hardcoded) return hardcoded;
-  await ready;
+  const db = await initDB();
   const result = await db.execute({
     sql: "SELECT * FROM custom_foods WHERE id = ?",
     args: [id],
