@@ -10,10 +10,14 @@ export interface LogEntry {
   createdAt: string;
 }
 
+// NO top-level code — everything inside functions only
 function getDB() {
+  if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
+    throw new Error("Missing Turso environment variables");
+  }
   return createClient({
-    url: process.env.TURSO_DATABASE_URL!,
-    authToken: process.env.TURSO_AUTH_TOKEN!,
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN,
   });
 }
 
